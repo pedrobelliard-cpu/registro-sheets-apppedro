@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuarios con Google Sheets</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --background-color: #f4f7f6;
+            --card-background: #ffffff;
+            --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--background-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-background);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="date"] {
+            border: 1px solid #ccc;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="date"]:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        /* Estilos para la lista de registros */
+        #lista-registros {
+            margin-top: 20px;
+            padding: 0;
+            list-style: none;
+        }
+        
+        .registro-item {
+            background-color: var(--background-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .registro-item p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .registro-item strong {
+            display: inline-block;
+            width: 80px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>👤 Registro de Nuevo Usuario</h1>
+
+        <form id="registro-form">
+            <label for="Nombre">Nombre Completo:</label>
+            <input type="text" id="Nombre" required>
+
+            <label for="Cedula">Cédula:</label>
+            <input type="text" id="Cedula" required>
+
+            <label for="Correo">Correo Electrónico:</label>
+            <input type="email" id="Correo" required>
+
+            <label for="Fecha">Fecha de Registro:</label>
+            <input type="date" id="Fecha" required>
+
+            <button type="submit">Enviar Registro</button>
+        </form>
+    </div>
+
+    <div class="container">
+        <h2>📋 Registros Existentes</h2>
+        <div id="lista-registros">
+            <p style="text-align: center; color: #777;">Cargando registros...</p>
+        </div>
+    </div>
+
+    <script>
+        // ======================================================================
+        //          !!! PASO CRÍTICO: REEMPLAZA ESTA URL !!!
+        // ======================================================================
+        const API_URL= "https://script.google.com/a/macros/infotep.gob.do/s/AKfycbw3J8ArfvDxYSUMJnBzDN14R_-4guRjf0aW_uhyhlhBBOan9KpSzGOxmr7LJosc2MoY/exec"; 
+        // Ejemplo: const API_URL = "https://script.google.com/macros/s/AKfycbzzhY.../exec";
+        // ======================================================================
+
+        const form = document.getElementById('registro-form');
+        const listaRegistros = document.getElementById('lista-registros');
+        
+        // --- FUNCIÓN PRINCIPAL PARA ENVÍO (POST) ---
+        async function enviarDatos(event) {
+            event.preventDefault(); // Evita el envío tradicional del formulario
+
+            const data = {
+                Nombre: document.getElementById('Nombre').value,
+                Cedula: document.getElementById('Cedula').value,
+                Correo: document.getElementById('Correo').value,
+                Fecha: document.getElementById('Fecha').value,
+            };
+
+            // Validación simple
+            if (!Object.values(data).every(val => val.trim())) {
+                alert("Por favor, complete todos los campos.");
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Necesario para Apps Script
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                // Como usamos 'no-cors', la respuesta es opaca. 
+                // Asumimos el éxito si no hay error de red y mostramos el feedback.
+                
+                alert("✅ Registro enviado con éxito a Google Sheets!");
+                form.reset(); // Limpia el formulario
+                cargarRegistros(); // Recarga la lista para ver el nuevo registro
+
+            } catch (error) {
+                console.error("Error al enviar los datos:", error);
+                alert("❌ Fallo al conectar o enviar los datos. Revisa la URL de la API.");
+            }
+        }
+
+        // --- FUNCIÓN PARA CARGAR REGISTROS (GET) ---
+        async function cargarRegistros() {
+            listaRegistros.innerHTML = '<p style="text-align: center; color: #777;">Cargando registros...</p>';
+            
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('Error de red o API.');
+                
+                const registros = await response.json();
+                
+                listaRegistros.innerHTML = ''; // Limpiar el mensaje de carga
+                
+                if (registros.length === 0) {
+                    listaRegistros.innerHTML = '<p style="text-align: center; color: #777;">No hay registros aún.</p>';
+                    return;
+                }
+
+                registros.forEach(registro => {
+                    const item = document.createElement('div');
+                    item.className = 'registro-item';
+                    
+                    // Aseguramos el orden y la visualización de los campos
+                    item.innerHTML = `
+                        <p><strong>ID:</strong> ${registro.ID}</p>
+                        <p><strong>Nombre:</strong> ${registro.Nombre}</p>
+                        <p><strong>Cédula:</strong> ${registro.Cedula}</p>
+                        <p><strong>Correo:</strong> ${registro.Correo}</p>
+                        <p><strong>Fecha:</strong> ${registro.Fecha}</p>
+                    `;
+                    listaRegistros.appendChild(item);
+                });
+
+            } catch (error) {
+                console.error("Error al cargar los registros:", error);
+                listaRegistros.innerHTML = '<p style="color: red; text-align: center;">Error al cargar los datos.</p>';
+            }
+        }
+
+        // --- INICIALIZACIÓN ---
+        form.addEventListener('submit', enviarDatos);
+        
+        // Cargar los registros al iniciar la página
+        document.addEventListener('DOMContentLoaded', cargarRegistros);
+    </script>
+</body>
+</html>
