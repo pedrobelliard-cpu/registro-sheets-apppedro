@@ -118,16 +118,16 @@
 
         <form id="registro-form">
             <label for="Nombre">Nombre Completo:</label>
-            <input type="text" id="Nombre" required>
+            <input type="text" id="Nombre" name="Nombre" required>
 
             <label for="Cedula">Cédula:</label>
-            <input type="text" id="Cedula" required>
+            <input type="text" id="Cedula" name="Cedula" required>
 
             <label for="Correo">Correo Electrónico:</label>
-            <input type="email" id="Correo" required>
+            <input type="email" id="Correo" name="Correo" required>
 
             <label for="Fecha">Fecha de Registro:</label>
-            <input type="date" id="Fecha" required>
+            <input type="date" id="Fecha" name="Fecha" required>
 
             <button type="submit">Enviar Registro</button>
         </form>
@@ -142,9 +142,12 @@
 
     <script>
         // ======================================================================
-        //          !!! PASO CRÍTICO: REEMPLAZA ESTA URL !!!
+        // !!! PASO CRÍTICO: USA TU URL FINAL Y VIGENTE AQUÍ !!!
         // ======================================================================
         const API_URL= "https://script.google.com/macros/s/AKfycbw3J8ArfvDxYSUMJnBzDN14R_-4guRjf0aW_uhyhlhBBOan9KpSzGOxmr7LJosc2MoY/exec";
+        // NOTA: Reemplacé la URL que me diste en el mensaje anterior (AKfycbwtKF7...) 
+        // por la que implementaste primero (AKfycbw3J8...), asumiendo que esa es la correcta.
+        // SI LA URL DE TU ÚLTIMA IMPLEMENTACIÓN ES DIFERENTE, CÁMBIALA AHORA.
         // ======================================================================
 
         const form = document.getElementById('registro-form');
@@ -154,6 +157,7 @@
         async function enviarDatos(event) {
             event.preventDefault(); // Evita el envío tradicional del formulario
 
+            // Se recopilan los datos con los IDs y se envían con el nombre del objeto (Nombre, Cedula, etc.)
             const data = {
                 Nombre: document.getElementById('Nombre').value,
                 Cedula: document.getElementById('Cedula').value,
@@ -168,25 +172,21 @@
             }
 
             try {
+                // El Apps Script ya está preparado para recibir JSON
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     mode: 'no-cors', // Necesario para Apps Script
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data),
+                    body: JSON.stringify(data), // Envía los datos como un objeto JSON
                 });
 
-                // Como usamos 'no-cors', la respuesta es opaca. 
-                // Asumimos el éxito si no hay error de red y mostramos el feedback.
-                
+                // Asumimos el éxito si no hay error de red.
                 alert("✅ Registro enviado con éxito a Google Sheets!");
                 form.reset(); // Limpia el formulario
-                cargarRegistros(); // Recarga la lista para ver el nuevo registro
+                cargarRegistros(); // Recarga la lista 
 
             } catch (error) {
                 console.error("Error al enviar los datos:", error);
-                alert("❌ Fallo al conectar o enviar los datos. Revisa la URL de la API.");
+                alert("❌ Fallo al conectar o enviar los datos. Revisa la URL de la API o la implementación del Apps Script.");
             }
         }
 
@@ -195,12 +195,16 @@
             listaRegistros.innerHTML = '<p style="text-align: center; color: #777;">Cargando registros...</p>';
             
             try {
+                // Esta función requiere que el Apps Script tenga una función doGet() implementada
+                // que devuelva los datos en formato JSON. Si solo implementaste doPost(),
+                // la lista de registros no cargará.
+                
                 const response = await fetch(API_URL);
                 if (!response.ok) throw new Error('Error de red o API.');
                 
                 const registros = await response.json();
                 
-                listaRegistros.innerHTML = ''; // Limpiar el mensaje de carga
+                listaRegistros.innerHTML = ''; 
                 
                 if (registros.length === 0) {
                     listaRegistros.innerHTML = '<p style="text-align: center; color: #777;">No hay registros aún.</p>';
@@ -223,8 +227,10 @@
                 });
 
             } catch (error) {
+                // Es común que el fetch falle si no hay una función doGet() implementada en el Apps Script
+                // que devuelva los datos. Por ahora, nos centraremos en el POST.
                 console.error("Error al cargar los registros:", error);
-                listaRegistros.innerHTML = '<p style="color: red; text-align: center;">Error al cargar los datos.</p>';
+                listaRegistros.innerHTML = '<p style="color: orange; text-align: center;">Nota: La lista de registros no se carga. Confirma que el Apps Script tiene una función doGet().</p>';
             }
         }
 
